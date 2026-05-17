@@ -1,0 +1,16 @@
+# Python Backend
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+backend/.env
+.env
+
+# Node/Tauri Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/src-tauri/target/
+
+# OS/Editor
+.DS_Store
+.vscode/
+.idea/
