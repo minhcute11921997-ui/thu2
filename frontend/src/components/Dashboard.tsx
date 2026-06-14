@@ -1,36 +1,57 @@
 import { useEffect, useState } from 'react';
-import { getStats } from '../services/api';
-import { Database, FileText, Server, Activity } from 'lucide-react';
+import { Activity, Database, FileText, RefreshCw, Server } from 'lucide-react';
+import { getStats, type DatasetStats } from '../services/api';
 
-export default function Dashboard() {
-  const [stats, setStats] = useState({ total_chunks: 0, total_documents: 0 });
-  useEffect(() => { getStats().then(setStats).catch(console.error); }, []);
+interface DashboardProps {
+  refreshKey: number;
+}
+
+export default function Dashboard({ refreshKey }: DashboardProps) {
+  const [stats, setStats] = useState<DatasetStats>({ dataset_name: 'local_documents', total_chunks: 0, total_documents: 0 });
+  const [loading, setLoading] = useState(false);
+
+  const loadStats = async () => {
+    setLoading(true);
+    try {
+      setStats(await getStats());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStats();
+  }, [refreshKey]);
 
   return (
-    <div className="p-10 max-w-6xl mx-auto">
-      <h2 className="text-3xl font-bold text-gray-800 mb-8 flex items-center gap-3">
-        <Activity className="w-8 h-8 text-blue-600" /> System Health
-      </h2>
-      <div className="grid grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-5">
-          <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center"><FileText className="w-7 h-7 text-blue-600" /></div>
-          <div><p className="text-gray-500 font-semibold mb-1">Total Documents</p><h3 className="text-3xl font-black text-gray-800">{stats.total_documents}</h3></div>
+    <div className="mx-auto max-w-6xl p-10">
+      <div className="mb-8 flex items-center justify-between gap-4">
+        <h2 className="flex items-center gap-3 text-3xl font-bold text-gray-800">
+          <Activity className="h-8 w-8 text-blue-600" /> Dataset Health
+        </h2>
+        <button onClick={loadStats} disabled={loading} className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60">
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          Lam moi
+        </button>
+      </div>
+      <div className="mb-8 grid grid-cols-3 gap-6">
+        <div className="flex items-center gap-5 rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-blue-100"><FileText className="h-7 w-7 text-blue-600" /></div>
+          <div><p className="mb-1 font-semibold text-gray-500">Documents</p><h3 className="text-3xl font-black text-gray-800">{stats.total_documents}</h3></div>
         </div>
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-5">
-          <div className="w-14 h-14 rounded-2xl bg-purple-100 flex items-center justify-center"><Database className="w-7 h-7 text-purple-600" /></div>
-          <div><p className="text-gray-500 font-semibold mb-1">Vector Chunks</p><h3 className="text-3xl font-black text-gray-800">{stats.total_chunks}</h3></div>
+        <div className="flex items-center gap-5 rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-purple-100"><Database className="h-7 w-7 text-purple-600" /></div>
+          <div><p className="mb-1 font-semibold text-gray-500">Vector Chunks</p><h3 className="text-3xl font-black text-gray-800">{stats.total_chunks}</h3></div>
         </div>
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-5">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-100 flex items-center justify-center"><Server className="w-7 h-7 text-emerald-600" /></div>
-          <div><p className="text-gray-500 font-semibold mb-1">Database Status</p><h3 className="text-xl font-bold text-emerald-600 mt-1">Encrypted Local</h3></div>
+        <div className="flex items-center gap-5 rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-emerald-100"><Server className="h-7 w-7 text-emerald-600" /></div>
+          <div><p className="mb-1 font-semibold text-gray-500">Dataset</p><h3 className="mt-1 text-xl font-bold text-emerald-600">{stats.dataset_name}</h3></div>
         </div>
       </div>
-      <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-3xl p-8 text-white shadow-xl">
-        <h4 className="font-bold text-xl mb-3 flex items-center gap-2">🚀 Apple Silicon Acceleration Active</h4>
-        <p className="text-slate-300 font-medium leading-relaxed">
-          Embeddings: <span className="text-white font-bold bg-slate-700 px-2 py-0.5 rounded">MPS GPU</span><br/>
-          LLM Engine: <span className="text-white font-bold bg-slate-700 px-2 py-0.5 rounded">Ollama (Llama 3.2 3B)</span><br/>
-          Hệ thống đảm bảo dữ liệu không bao giờ rời khỏi thiết bị, đáp ứng tiêu chuẩn Compliance cho ngành Luật & Tài chính.
+      <div className="rounded-xl bg-slate-900 p-8 text-white shadow-xl">
+        <h4 className="mb-3 text-xl font-bold">Local dataset behavior</h4>
+        <p className="font-medium leading-relaxed text-slate-300">
+          Them file se luu file goc trong backend/uploads va tao vector chunks trong ChromaDB. Xoa file se xoa ca chunks khoi dataset va xoa file goc da luu.
         </p>
       </div>
     </div>

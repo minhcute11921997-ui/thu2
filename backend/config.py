@@ -1,14 +1,16 @@
 import os
 
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-MODEL_NAME = "llama3.2" # 3B parameters tối ưu cho Mac
+MODEL_NAME = os.getenv("MODEL_NAME", "qwen3.5:9b")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
 CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", "./data/chroma")
+USE_LLM_EVIDENCE_SELECTOR = os.getenv("USE_LLM_EVIDENCE_SELECTOR", "false").lower() == "true"
+SEARCH_TOP_K = int(os.getenv("SEARCH_TOP_K", "16"))
+MAX_EVIDENCE_ITEMS = int(os.getenv("MAX_EVIDENCE_ITEMS", "5"))
 
-# Chunking config
 CHUNK_SIZE = 400
 CHUNK_OVERLAP = 50
 
-# LLM Config
-TEMPERATURE = 0.1 # Tránh ảo giác (hallucination)
-MAX_TOKENS = 1024
+TEMPERATURE = 0.1
+MAX_TOKENS = int(os.getenv("MAX_TOKENS", "768"))
+OLLAMA_NUM_CTX = int(os.getenv("OLLAMA_NUM_CTX", "4096"))
