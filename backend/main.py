@@ -11,7 +11,13 @@ from pydantic import BaseModel
 from document_parser import DocumentParser
 from ollama_client import OllamaClient
 from prompts import QA_SYSTEM_PROMPT, SUMMARIZE_SYSTEM_PROMPT
-from config import MAX_EVIDENCE_ITEMS, SEARCH_TOP_K, USE_LLM_EVIDENCE_SELECTOR
+from config import (
+    CONVERSATION_CONTEXT_CHARS,
+    MAX_EVIDENCE_ITEMS,
+    RETRIEVAL_CONTEXT_CHARS,
+    SEARCH_TOP_K,
+    USE_LLM_EVIDENCE_SELECTOR,
+)
 from vector_store import VectorStore, keyword_terms
 
 app = FastAPI(title="LocalAI DocManager API")
@@ -56,6 +62,26 @@ def format_retrieved_context(results: list[dict]) -> str:
         context_blocks.append(f"[Nguon: {filename}, doan {chunk_index}]\n{content}")
 
     return "\n\n---\n\n".join(context_blocks)
+
+
+def build_retrieval_query(question: str, conversation_context: str) -> str:
+    if not conversation_context:
+        return question
+
+    recent_context = conversation_context[-RETRIEVAL_CONTEXT_CHARS:]
+    return (
+        "Ngu canh gan day cua cuoc tro chuyen:\n"
+        f"{recent_context}\n\n"
+        "Cau hoi hien tai can tra loi:\n"
+        f"{question}"
+    )
+
+
+HISTORY_RESOLUTION_PROMPT = (
+    "Neu cau hoi hien tai dung dai tu/cum nhu 'no', 'ben do', 'truong hop tren', "
+    "hay giai thich chung theo ngu canh cuoc tro chuyen truoc khi tra loi. "
+    "Van chi duoc ket luan dua tren TAI LIEU TRICH XUAT.\n\n"
+)
 
 
 def ensure_cited_answer(answer: str) -> str:
@@ -316,9 +342,10 @@ async def query_document(req: QueryRequest):
         if not question:
             raise HTTPException(status_code=400, detail="Cau hoi khong duoc de trong.")
 
-        conversation_context = (req.conversation_context or "").strip()[:2500]
-        candidates = vector_store.search_candidates(question, top_k=SEARCH_TOP_K)
-        results = select_relevant_evidence(question, candidates, max_items=MAX_EVIDENCE_ITEMS)
+        conversation_context = (req.conversation_context or "").strip()[-CONVERSATION_CONTEXT_CHARS:]
+        retrieval_query = build_retrieval_query(question, conversation_context)
+        candidates = vector_store.search_candidates(retrieval_query, top_k=SEARCH_TOP_K)
+        results = select_relevant_evidence(retrieval_query, candidates, max_items=MAX_EVIDENCE_ITEMS)
         if not results:
             return {"answer": "Khong tim thay thong tin phu hop trong co so du lieu.", "sources": []}
 
@@ -327,6 +354,7 @@ async def query_document(req: QueryRequest):
 
         answer = ollama_client.generate(
             prompt=(
+                HISTORY_RESOLUTION_PROMPT +
                 "Các đoạn trong TÀI LIỆU TRÍCH XUẤT đã được hệ thống chọn vì liên quan đến câu hỏi hiện tại. "
                 "Hãy dùng các đoạn đó để trả lời, không từ chối nếu có căn cứ phù hợp. "
                 "Trả lời trực tiếp đúng câu hỏi hiện tại trước, sau đó mới phân tích. "

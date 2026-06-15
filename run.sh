@@ -2,6 +2,7 @@
 set -e
 
 echo "=== LOCAL AI DOC MANAGER ==="
+export MODEL_NAME="${MODEL_NAME:-gemma4:12b-it-q4_K_M}"
 
 # Kiểm tra M-Series & Ollama
 if [[ $(uname -m) == 'arm64' && $(uname) == 'Darwin' ]]; then
@@ -14,12 +15,12 @@ if ! command -v ollama &> /dev/null; then
     exit 1
 fi
 
-echo "📦 Kéo model Llama 3.2 3B (Nếu chưa có)..."
-ollama pull llama3.2
+echo "📦 Kéo model ${MODEL_NAME} (Nếu chưa có)..."
+ollama pull "${MODEL_NAME}"
 
 echo "🤖 Khởi động Ollama server..."
 # Ollama chạy mặc định background trên Mac, đánh thức nó:
-ollama run llama3.2 "hello" > /dev/null 2>&1 &
+ollama run "${MODEL_NAME}" "hello" > /dev/null 2>&1 &
 
 echo "⚙️ Khởi động Backend..."
 cd backend

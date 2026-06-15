@@ -27,6 +27,8 @@ interface Conversation {
 }
 
 const STORAGE_KEY = 'mis.chat.conversations.v1';
+const HISTORY_MESSAGE_LIMIT = 16;
+const HISTORY_CHAR_LIMIT = 6000;
 const WELCOME_MESSAGE: Message = {
   role: 'assistant',
   content:
@@ -42,13 +44,17 @@ const createConversation = (): Conversation => ({
 });
 
 const buildConversationContext = (messages: Message[]) => {
-  const history = messages
+  const historyLines = messages
     .filter((message) => message.role !== 'assistant' || message.content !== WELCOME_MESSAGE.content)
-    .slice(-8)
-    .map((message) => `${message.role === 'user' ? 'Nguoi dung' : 'Tro ly'}: ${message.content}`)
-    .join('\n\n');
+    .slice(-HISTORY_MESSAGE_LIMIT)
+    .map((message, index) => {
+      const role = message.role === 'user' ? 'Nguoi dung' : 'Tro ly';
+      const content = message.content.replace(/\s+/g, ' ').trim();
+      return `Luot ${index + 1} - ${role}: ${content}`;
+    });
 
-  return history;
+  const history = historyLines.join('\n\n');
+  return history.length > HISTORY_CHAR_LIMIT ? history.slice(-HISTORY_CHAR_LIMIT) : history;
 };
 
 export default function ChatBox() {

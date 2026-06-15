@@ -10,8 +10,10 @@ if %errorlevel% neq 0 (
     exit /b
 )
 
+set MODEL_NAME=gemma4:12b-it-q4_K_M
+
 echo Starting Ollama Server...
-start "Ollama Server" cmd /c "echo Starting Llama 3.2... && ollama pull llama3.2 && ollama run llama3.2"
+start "Ollama Server" cmd /c "echo Starting %MODEL_NAME%... && ollama pull %MODEL_NAME% && ollama run %MODEL_NAME%"
 
 echo [2/3] Starting Backend (FastAPI)...
 cd backend
@@ -19,7 +21,7 @@ if not exist "venv" (
     echo Creating Python virtual environment...
     python -m venv venv
 )
-start "FastAPI Backend" cmd /k "call venv\Scripts\activate.bat && pip install -r requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000"
+start "FastAPI Backend" cmd /k "set MODEL_NAME=%MODEL_NAME% && call venv\Scripts\activate.bat && pip install -r requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000"
 
 echo [3/3] Starting Frontend (Tauri/React)...
 cd ..\frontend

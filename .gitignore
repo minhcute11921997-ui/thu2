@@ -3,12 +3,15 @@ backend/venv/
 backend/__pycache__/
 backend/*.pyc
 backend/.env
+backend/*.log
 .env
+data/
 
 # Node/Tauri Frontend
 frontend/node_modules/
 frontend/dist/
 frontend/src-tauri/target/
+frontend/*.log
 
 # OS/Editor
 .DS_Store
